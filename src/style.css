@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+@media only screen and (max-width:1151px) {
+    .main{
+        padding:  0 28px;
+       
+    }
+}
+
+.main{
+    min-width: 462px;
+}
