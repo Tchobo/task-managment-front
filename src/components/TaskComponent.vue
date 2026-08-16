@@ -9,7 +9,7 @@
 
           </div>
           <h3 class="text-left mt-3 font-mono font-semibold leading-5 text-[15px] text-black">{{taskObjectProp.title}}</h3>
-          <img v-if="taskObjectProp.files.length>0" :src="`${taskObjectProp.files[0].file.split('.')[1]!='pdf'? `http://127.0.0.1:8080${taskObjectProp.files[0].file}`: '../assets/images/task_image.jpg'}`" class="mt-3 w-100 h-[210px] rounded-[14px] object-cover"
+          <img   :src="imageFile" class="mt-3 w-100 h-[210px] rounded-[14px] object-cover"
             alt="">
           <div class="tags flex grid-cols-4 mt-4 gap-2" >
             <div class="tag  p-1 px-2 bg-task-home-bg rounded-[200px] font-mono font-light leading-5 text-[14px]" >
@@ -103,6 +103,11 @@ import { VList } from "vuetify/lib/components/index.mjs";
 import { faMessage as farFaMessage } from "@fortawesome/free-solid-svg-icons";
 import { faPaperclip } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+import { computed } from "vue";
+
+
+
+
 const props = defineProps({
   taskObjectProp: {
     type: Object,
@@ -120,6 +125,20 @@ const handleClick = (taskData) => {
   emit('detail-clicked', taskData);
 
 }
+
+// Extensions d’images à reconnaître
+const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp']
+
+const imageFile = computed(() => {
+  const files = props.taskObjectProp?.files || []
+
+  const img = files.find(file => {
+    const ext = file.file.split('.').pop().toLowerCase()
+    return imageExtensions.includes(ext)
+  })
+
+  return img ? `http://127.0.0.1:8080${img.file}` : new URL('../assets/images/task_image.jpg', import.meta.url).href
+})
 
 </script>
 
