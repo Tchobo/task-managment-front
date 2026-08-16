@@ -11,7 +11,7 @@ export async function apiRequest(
 ) {
   let authToken //: string | undefined | null = undefined;
   let userToken = localStorage.getItem('userToken')
-  store.dispatch('setLoggedUserToken', userToken)
+  store.commit('setLoggedUserToken', userToken)
   //authToken = sessionStorage.getItem("token");
   authToken =userToken
   const router = useRouter();

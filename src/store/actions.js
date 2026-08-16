@@ -2,6 +2,8 @@
 
 import { userService } from "../helpers/user.service";
 import { apiRequest } from "../helpers/api-call";
+import store from "../store";
+
 export async function loginUser({ commit }, loginData) {
   try {
     const response = await userService.login(loginData.email, loginData.password);
@@ -9,335 +11,406 @@ export async function loginUser({ commit }, loginData) {
     if (response.data.token) {
       localStorage.setItem('userToken', response.data.token);
       commit('setLoggedUserToken', response.data.token);
-    
-      return true; // Return true for successful login
+      return true;
     } else {
       commit('setLoggedUserToken', '');
-      return false; // Return false for unsuccessful login
+      return false;
     }
   } catch (error) {
     console.error('Error logging in:', error);
     commit('setLoggedUserToken', '');
-    return false; // Return false for any error during login
+    return false;
   }
 }
 
-
 export async function getDashboardList({ commit }) {
   try {
-    const response = await  apiRequest(
+    const response = await apiRequest(
       "GET",
       "api/dashboard/dashboard-list/",
       undefined,
       false
     );
-    console.log("la réponse", response);
+    
+    
     if (response.data) {
       commit('setDashboardList', response.data);
-    
-      return true; // Return true for successful login
+      return true;
     } else {
-      commit('setDashboardList', '');
-      return false; // Return false for unsuccessful login
+      commit('setDashboardList', []);
+      return false;
     }
   } catch (error) {
-    console.error('Error logging in:', error);
-    commit('setDashboardList', '');
-    return false; // Return false for any error during login
+    console.error('Error getting dashboard list:', error);
+    commit('setDashboardList', []);
+    return false;
   }
 }
-
 
 export async function addDashboard({ commit }, dashObject) {
   try {
-    const response = await  apiRequest(
+    const response = await apiRequest(
       "POST",
       "api/dashboard/dashboard-create/",
       {
-        bordName:dashObject.bordName,
-        bordDescription:dashObject.bordDescription
+        bordName: dashObject.bordName,
+        bordDescription: dashObject.bordDescription
       },
       false
     );
-    console.log("la réponse", response);
+    
+    
     if (response.data) {
-    
-    
-      return true; // Return true for successful login
+      commit('addDashboardToList', response.data);
+      return true;
     } else {
-     
-      return false; // Return false for unsuccessful login
+      return false;
     }
   } catch (error) {
-    console.error('Error logging in:', error);
- 
-    return false; // Return false for any error during login
+    console.error('Error adding dashboard:', error);
+    return false;
   }
 }
 
-
 export async function updateDashboard({ commit }, dashObject) {
   try {
-    const response = await  apiRequest(
+    const response = await apiRequest(
       "PUT",
-      "api/dashboard/dashboard-update/"+dashObject.id,
+      "api/dashboard/dashboard-update/" + dashObject.id,
       {
-        
-        bordName:dashObject.bordName.trim(),
-        bordDescription:dashObject.bordDescription.trim()
+        bordName: dashObject.bordName.trim(),
+        bordDescription: dashObject.bordDescription.trim()
       },
       false
     );
-    console.log("la réponse", response);
+    
+    
     if (response.data) {
-    
-    
-      return true; // Return true for successful login
+      commit('updateDashboardInList', response.data);
+      return true;
     } else {
-     
-      return false; // Return false for unsuccessful login
+      return false;
     }
   } catch (error) {
-    console.error('Error logging in:', error);
- 
-    return false; // Return false for any error during login
+    console.error('Error updating dashboard:', error);
+    return false;
   }
 }
 
 export async function detailDashboard({ commit }, dashId) {
   try {
-    const response = await  apiRequest(
+    
+    const response = await apiRequest(
       "GET",
-      "api/dashboard/dashboard-list/"+dashId,
-     null,
+      "api/dashboard/dashboard-list/" + dashId,
+      null,
       false
     );
-    console.log("la réponse", response);
+    
+    
     if (response.data) {
+      // Vérifier si les catégories existent
+      if (!response.data.categories) {
+        console.warn('⚠️ Attention: Le dashboard ne contient pas de catégories');
+        response.data.categories = [];
+      } else {
+        
+        // Vérifier si chaque catégorie a des tâches
+        response.data.categories.forEach((cat, index) => {
+          if (!cat.tasks) {
+            console.warn(`⚠️ La catégorie "${cat.name}" n'a pas de tâches`);
+            cat.tasks = [];
+          } else {
+          }
+        });
+      }
+      
       commit('setDashboardDetail', response.data);
-   
-      return true; // Return true for successful login
+      return true;
     } else {
-     
-      return false; // Return false for unsuccessful login
+      console.error('❌ Pas de données dans la réponse');
+      commit('setDashboardDetail', null);
+      return false;
     }
   } catch (error) {
-    console.error('Error logging in:', error);
- 
-    return false; // Return false for any error during login
+    console.error('❌ Error getting dashboard detail:', error);
+    commit('setDashboardDetail', null);
+    return false;
   }
 }
-
-
 
 export async function patchCategoriePosition({ commit }, category) {
   try {
-    const response = await  apiRequest(
+    const response = await apiRequest(
       "PATCH",
-      "api/dashboard/category-patch/"+category.id,
+      "api/dashboard/category-patch/" + category.id,
       {
-        
-        indexNumber:category.position < 0.00002? 60000.00:category.position,
-       
+        indexNumber: category.position < 0.00002 ? 60000.00 : category.position,
       },
       false
     );
-    console.log("la réponse", response);
+    
+    
     if (response.data) {
-    
-    
-      return true; // Return true for successful login
+      return true;
     } else {
-     
-      return false; // Return false for unsuccessful login
+      return false;
     }
   } catch (error) {
-    console.error('Error patching position value: ', error);
- 
-    return false; // Return false for any error during login
+    console.error('Error patching position value:', error);
+    return false;
   }
 }
-
 
 export async function patchTaskPosition({ commit }, task) {
   try {
-    const response = await  apiRequest(
+    const response = await apiRequest(
       "PATCH",
-      "api/tasks/task-patch/"+task.id,
+      "api/tasks/task-patch/" + task.id,
       {
-        
-        position:task.position < 0.00002? 60000.00:task.position,
-        taskCategorie : task.categorie
-       
+        position: task.position < 0.00002 ? 60000.00 : task.position,
+        taskCategorie: task.categorie
       },
       false
     );
-    console.log("la réponse", response);
+    
+    
     if (response.data) {
-    
-    
-      return true; // Return true for successful login
+      return true;
     } else {
-     
-      return false; // Return false for unsuccessful login
+      return false;
     }
   } catch (error) {
-    console.error('Error patching position value: ', error);
- 
-    return false; // Return false for any error during login
+    console.error('Error patching position value:', error);
+    return false;
   }
 }
-
 
 export async function addCategory({ commit }, categorieObject) {
   try {
-    const response = await  apiRequest(
+    
+    const response = await apiRequest(
       "POST",
       "api/dashboard/category-create",
       {
-        name:categorieObject.name,
-        indexColor:categorieObject.indexColor,
-        dashboard:categorieObject.dashboard
+        name: categorieObject.name,
+        indexColor: categorieObject.indexColor,
+        dashboard: categorieObject.dashboard
       },
       false
     );
-    console.log("la réponse", response);
+    
+    
     if (response.data) {
-    
-    
-      return true; // Return true for successful login
+      // Recharger les détails du dashboard pour avoir la nouvelle catégorie
+      // Note: Vous devriez idéalement avoir l'ID du dashboard dans categorieObject
+      return true;
     } else {
-     
-      return false; // Return false for unsuccessful login
+      return false;
     }
   } catch (error) {
     console.error('Error during the save operation:', error);
- 
-    return false; // Return false for any error during login
+    return false;
   }
 }
 
+export async function updateCategory({ commit }, categorieObject) {
+  try {
+    
+    const response = await apiRequest(
+      "PUT",
+      "api/dashboard/category-update/" + categorieObject.id,
+      {
+        name: categorieObject.name,
+        indexColor: categorieObject.indexColor,
+        dashboard: categorieObject.dashboard
+      },
+      false
+    );
+    
+    
+    if (response.data) {
+      return true;
+    } else {
+      return false;
+    }
+  } catch (error) {
+    console.error('Error updating category:', error);
+    return false;
+  }
+}
 
 export async function addTask({ commit }, taskObject) {
-  const formData = new FormData()
-  formData.append("title" , taskObject.title)
-  formData.append("badgeColor", taskObject.badgeColor)
-  formData.append("taskCategorie" , taskObject.taskCategory)
-  formData.append("tags" , taskObject.tags)
-  formData.append("deadline" , taskObject.deadline)
- 
   try {
-    const response = await  apiRequest(
+    
+    const formData = new FormData();
+    formData.append("title", taskObject.title);
+    formData.append("badgeColor", taskObject.badgeColor);
+    formData.append("taskCategorie", taskObject.taskCategory);
+    formData.append("tags", taskObject.tags);
+    formData.append("deadline", taskObject.deadline);
+    
+    // Afficher le contenu du FormData pour debug
+    for (let [key, value] of formData.entries()) {
+    }
+ 
+    const response = await apiRequest(
       "POST",
       "api/tasks/task-create/",
-      
-        formData
-      ,
+      formData,
       { "Content-Type": "multipart/form-data" }
     );
-    console.log("la réponse", response);
-    if (response.data) {
     
     
-      return true; // Return true for successful login
+    if (response.data && response.data.status==201 ) {
+      return true;
     } else {
-     
-      return false; // Return false for unsuccessful login
+      return false;
     }
   } catch (error) {
     console.error('Error during the save operation:', error);
- 
-    return false; // Return false for any error during login
+    return false;
+  }
+}
+
+export async function updateTask({ commit }, taskObject) {
+  try {
+    
+    const formData = new FormData();
+    formData.append("title", taskObject.title);
+    formData.append("badgeColor", taskObject.badgeColor);
+    formData.append("tags", taskObject.tags);
+    formData.append("deadline", taskObject.deadline);
+    
+    if (taskObject.description) {
+      formData.append("description", taskObject.description);
+    }
+    
+    const response = await apiRequest(
+      "PUT",
+      "api/tasks/task-update/" + taskObject.id,
+      formData,
+      { "Content-Type": "multipart/form-data" }
+    );
+    
+    
+    if (response.data) {
+      return true;
+    } else {
+      return false;
+    }
+  } catch (error) {
+    console.error('Error updating task:', error);
+    return false;
   }
 }
 
 export async function detailTask({ commit }, taskId) {
   try {
-    const response = await  apiRequest(
+    
+    const response = await apiRequest(
       "GET",
-      "api/tasks/task-detail/"+taskId,
-     null,
+      "api/tasks/task-detail/" + taskId,
+      null,
       false
     );
-    console.log("la réponse", response);
+    
+    
     if (response.data) {
+      // S'assurer que comments existe
+      if (!response.data.comments) {
+        response.data.comments = [];
+      }
+      
       commit('setTaskDetail', response.data);
-   
-      return true; // Return true for successful login
+      return true;
     } else {
-     
-      return false; // Return false for unsuccessful login
+      commit('setTaskDetail', null);
+      return false;
     }
   } catch (error) {
-    console.error('Error logging in:', error);
- 
-    return false; // Return false for any error during login
+    console.error('Error getting task detail:', error);
+    commit('setTaskDetail', null);
+    return false;
   }
 }
-
 
 export async function patchTask({ commit }, taskObj) {
-  const formDatas = new FormData()
-  formDatas.append("title" , taskObj.title)
-  formDatas.append("description", taskObj.description)
-
-  if (taskObj.uploaded_file && taskObj.uploaded_file.length > 0) {
-    console.log("let go ", taskObj.uploaded_file);
-    taskObj.uploaded_file.forEach(file => {
-      formDatas.append("uploaded_files", file, file.name);
-    });
-  }
-console.log("form Data ", formDatas)
   try {
-    const response = await  apiRequest(
-      "PATCH",
-      "api/tasks/task-patch/"+taskObj.id,
-      formDatas
     
+    const formDatas = new FormData();
+    formDatas.append("title", taskObj.title);
+    formDatas.append("description", taskObj.description);
+
+    if (taskObj.uploaded_file && taskObj.uploaded_file.length > 0) {
+      taskObj.uploaded_file.forEach(file => {
+        formDatas.append("uploaded_files", file, file.name);
+      });
+    }
+    
+    
+    const response = await apiRequest(
+      "PATCH",
+      "api/tasks/task-patch/" + taskObj.id,
+      formDatas
     );
-    console.log("la réponse", response);
+    
+    
     if (response.data) {
       commit('setTaskDetail', response.data);
-    
-      return true; // Return true for successful login
+      return true;
     } else {
-     
-      return false; // Return false for unsuccessful login
+      return false;
     }
   } catch (error) {
-    console.error('Error logging in:', error);
- 
-    return false; // Return false for any error during login
+    console.error('Error patching task:', error);
+    return false;
   }
 }
 
-
-export async function addTaskComment({ commit }, taskObject) {
-  
+export async function deleteTask({ commit }, taskId) {
   try {
-    const response = await  apiRequest(
-      "POST",
-      "api/tasks/taskcomment-create/",
-      
-        {
-          text:taskObject.text,
-          task:taskObject.task
-      }
-      ,
+    
+    const response = await apiRequest(
+      "DELETE",
+      "api/tasks/task-delete/" + taskId,
+      null,
       false
     );
-    console.log("la réponse", response);
-    if (response.data) {
     
     
-      return true; // Return true for successful login
+    if (response.status === 200 || response.status === 204) {
+      return true;
     } else {
-     
-      return false; // Return false for unsuccessful login
+      return false;
+    }
+  } catch (error) {
+    console.error('Error deleting task:', error);
+    return false;
+  }
+}
+
+export async function addTaskComment({ commit }, taskObject) {
+  try {
+    
+    const response = await apiRequest(
+      "POST",
+      "api/tasks/taskcomment-create/",
+      {
+        text: taskObject.text,
+        task: taskObject.task
+      },
+      false
+    );
+    
+    
+    if (response.data) {
+      return true;
+    } else {
+      return false;
     }
   } catch (error) {
     console.error('Error during the save operation:', error);
- 
-    return false; // Return false for any error during login
+    return false;
   }
 }
