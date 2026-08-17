@@ -1,5 +1,5 @@
 <template>
-    <div class=" relative pt-8 h-full   w-100 bg-contain bg-right bg-image">
+    <div class=" relative pt-8 h-full min-h-screen   w-100 bg-contain bg-right bg-image">
 
         <div class=" absolute w-[44%] left-0 top-0 bottom-0 h-screen bg-bg-white-login ">
             <div class="mt-[6.2rem] flex justify-center flex-col items-center w-auto height-[70%]">
