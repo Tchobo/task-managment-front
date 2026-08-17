@@ -185,12 +185,86 @@
           type="date"
           pattern="\d{4}-\d{2}-\d{2}"
           class="hide-placeholder w-full pl-3 pr-2 h-11 border rounded-[6px] focus:outline-task-blue border-x-task-gray font-mono mt-2 font-medium leading-6 text-[14px] placeholder-transparent"
-          name="deadline" 
-          id="deadline" 
-          placeholder="YYYY-MM-DD"  
+          name="deadline"
+          id="deadline"
+          placeholder="YYYY-MM-DD"
           v-model="taskObject.deadline"
           :style="`color:${taskObject.deadline!=''?'#212121':'transparent'}`"
         />
+      </div>
+
+      <div class="form-group mt-5">
+        <label for="assignee" class="font-mono text-left text-task-black-label font-medium leading-6 text-[14px]">
+          Assign to
+        </label>
+        <v-select
+          v-model="taskObject.assign_To"
+          :items="usersList"
+          :item-title="(u) => u.name || u.email"
+          item-value="id"
+          placeholder="Select a user"
+          clearable
+          hide-details
+          density="compact"
+          variant="outlined"
+          class="mt-2"
+        >
+          <template #item="{ props, item }">
+            <v-list-item
+              v-bind="props"
+              :title="item.raw.name || 'Sans nom'"
+              :subtitle="item.raw.email"
+            >
+              <template #prepend>
+                <v-avatar
+                  size="36"
+                  color="#007AFF"
+                  class="mr-3 d-flex align-center justify-center"
+                >
+                  <v-img
+                    v-if="item.raw.profile_image"
+                    :src="absoluteMediaUrl(item.raw.profile_image)"
+                    alt="avatar"
+                    cover
+                    width="36"
+                    height="36"
+                  />
+                  <span
+                    v-else
+                    class="text-white font-mono font-bold"
+                    style="font-size: 13px; line-height: 1;"
+                  >
+                    {{ (item.raw.name || item.raw.email).charAt(0).toUpperCase() }}
+                  </span>
+                </v-avatar>
+              </template>
+            </v-list-item>
+          </template>
+          <template #selection="{ item }">
+            <div class="d-flex align-center" style="gap: 8px;">
+              <v-avatar
+                size="24"
+                color="#007AFF"
+                class="d-flex align-center justify-center overflow-hidden"
+              >
+                <img
+                  v-if="item.raw.profile_image"
+                  :src="absoluteMediaUrl(item.raw.profile_image)"
+                  alt="avatar"
+                  class="w-full h-full object-cover"
+                />
+                <span
+                  v-else
+                  class="text-white font-mono font-bold"
+                  style="font-size: 11px; line-height: 1;"
+                >
+                  {{ (item.raw.name || item.raw.email).charAt(0).toUpperCase() }}
+                </span>
+              </v-avatar>
+              <span class="font-mono text-[13px]">{{ item.raw.name || item.raw.email }}</span>
+            </div>
+          </template>
+        </v-select>
       </div>
 
       <v-row class="flex justify-center mt-4 mb-3">
@@ -231,10 +305,77 @@
        
         <div class="heading-tag flex item-center justify-between mt-4">
           <div class="left-content flex items-center gap-10">
-            <div class="relative flex p-0 items-center text-[18px]">
-              <span class="font-mono font-medium">+</span>
-              <img src="../assets/images/task_image.jpg" alt="person" class="ml-2 w-[28px] h-[28px] rounded-full">
-              <img src="../assets/images/ProfilePic.png" alt="person" class="absolute top-[0px] left-10 w-[28px] h-[28px] rounded-full object-cover">
+            <div class="flex items-center gap-2 min-w-[240px]">
+              <label for="detail-assignee" class="font-mono text-[13px] text-task-black-label whitespace-nowrap">
+                Assign to
+              </label>
+              <v-select
+                id="detail-assignee"
+                v-model="taskObject.assign_To"
+                :items="usersList"
+                :item-title="(u) => u.name || u.email"
+                item-value="id"
+                placeholder="Select a user"
+                clearable
+                hide-details
+                density="compact"
+                variant="outlined"
+                class="flex-1"
+              >
+                <template #item="{ props, item }">
+                  <v-list-item
+                    v-bind="props"
+                    :title="item.raw.name || 'Sans nom'"
+                    :subtitle="item.raw.email"
+                  >
+                    <template #prepend>
+                      <v-avatar
+                        size="36"
+                        color="#007AFF"
+                        class="mr-3 d-flex align-center justify-center overflow-hidden"
+                      >
+                        <img
+                          v-if="item.raw.profile_image"
+                          :src="absoluteMediaUrl(item.raw.profile_image)"
+                          alt="avatar"
+                          class="w-full h-full object-cover"
+                        />
+                        <span
+                          v-else
+                          class="text-white font-mono font-bold"
+                          style="font-size: 13px; line-height: 1;"
+                        >
+                          {{ (item.raw.name || item.raw.email).charAt(0).toUpperCase() }}
+                        </span>
+                      </v-avatar>
+                    </template>
+                  </v-list-item>
+                </template>
+                <template #selection="{ item }">
+                  <div class="d-flex align-center" style="gap: 8px;">
+                    <v-avatar
+                      size="24"
+                      color="#007AFF"
+                      class="d-flex align-center justify-center overflow-hidden"
+                    >
+                      <img
+                        v-if="item.raw.profile_image"
+                        :src="absoluteMediaUrl(item.raw.profile_image)"
+                        alt="avatar"
+                        class="w-full h-full object-cover"
+                      />
+                      <span
+                        v-else
+                        class="text-white font-mono font-bold"
+                        style="font-size: 11px; line-height: 1;"
+                      >
+                        {{ (item.raw.name || item.raw.email).charAt(0).toUpperCase() }}
+                      </span>
+                    </v-avatar>
+                    <span class="font-mono text-[13px]">{{ item.raw.name || item.raw.email }}</span>
+                  </div>
+                </template>
+              </v-select>
             </div>
             <div class="tags flex grid-cols-4 gap-2">
               <div class="tag p-1 px-2 bg-task-home-bg rounded-[200px] font-mono font-light leading-5 text-[14px]">
@@ -250,9 +391,15 @@
             </div>
           </div>
           <div class="right-content flex gap-5">
-            <button class="font-mono font-medium leading-2 text-[14px] px-3 bg-task-red text-white rounded-[6px]" @click="taskDetailModelValue = false">
-              Cancel
+            <button
+              v-if="canDeleteCurrentTask"
+              class="font-mono font-medium leading-2 text-[14px] px-3 border border-task-red text-task-red rounded-[6px] hover:bg-task-red hover:text-white transition"
+              @click="deleteCurrentTask"
+              :disabled="isDeleting"
+            >
+              {{ isDeleting ? 'Deleting…' : 'Delete' }}
             </button>
+           
             <v-btn :loading="isLoading" class="pt-1 pb-1 px-2 text-center taskSaveBtn rounded-[6px] cursor-pointer" @click="patchTask">
               <span class="font-mono font-medium leading-6 text-[14px] spnLogin text-task-blue">Save changes</span>
               <v-progress-circular v-if="isLoading" class="font-mono" indeterminate size="8" aria-colcount="white">
@@ -367,7 +514,7 @@
 import CurrentPage from '../components/CurrentPage.vue';
 import Header from '../components/Header.vue';
 import Navigation from '../components/Navigation.vue';
-import { VProgressCircular, VRow, VBtn, VSnackbar } from "vuetify/lib/components/index.mjs";
+import { VProgressCircular, VRow, VBtn, VSnackbar, VSelect, VListItem, VAvatar } from "vuetify/lib/components/index.mjs";
 import Modal from "../components/Modal.vue";
 import TaskCategory from "../components/TaskCategory.vue";
 import store from "../store";
@@ -378,6 +525,7 @@ import CloseCircle from "vue-material-design-icons/CloseCircleOutline.vue";
 import CloseCircleSpan from "vue-material-design-icons/CloseCircle.vue";
 import EmojiPicker from 'vue3-emoji-picker';
 import 'vue3-emoji-picker/css';
+import { apiRequest, apiUrl } from '../helpers/api-call';
 // import DebugPanel from '../components/DebugPanel.vue'; // Décommentez pour activer le debug
 
 const verifyIfPageisActive = ref(false);
@@ -403,17 +551,47 @@ const commentObject = reactive({
   task: null 
 });
 
-const taskObject = reactive({ 
-  id: null, 
-  title: '', 
-  taskCategory: null, 
-  tags: [], 
-  badgeColor: [], 
-  deadline: "", 
-  description: "", 
-  uploaded_file: [], 
-  comments: [] 
+const taskObject = reactive({
+  id: null,
+  title: '',
+  taskCategory: null,
+  tags: [],
+  badgeColor: [],
+  deadline: "",
+  description: "",
+  uploaded_file: [],
+  comments: [],
+  assign_To: null,
+  creator: null,
 });
+
+// Users list for the assignee picker — fetched once on mount from /api/user/list/.
+// Consumed directly by the v-select components via item-title="(u) => u.name || u.email".
+const usersList = ref([]);
+
+// Prefix a backend-relative media path with the API base URL. Users' profile
+// images come back as "/static/media/uploads/..." which the browser would
+// otherwise resolve against the Vite dev server (5173) instead of Django (8080).
+function absoluteMediaUrl(path) {
+  if (!path) return null;
+  if (/^https?:\/\//i.test(path)) return path;
+  return apiUrl + (path.startsWith('/') ? path : '/' + path);
+}
+
+// Current user id — used to gate the "Delete task" button so that only the
+// creator sees it. Fetched from /api/user/me/ on mount (authoritative source,
+// unlike localStorage which may have a stale or unexpected shape). Backend
+// also enforces the permission on DELETE (returns 404 for non-creators).
+const currentUserId = ref(null);
+
+const canDeleteCurrentTask = computed(() =>
+  taskObject.id != null &&
+  currentUserId.value != null &&
+  taskObject.creator != null &&
+  Number(taskObject.creator) === Number(currentUserId.value)
+);
+
+const isDeleting = ref(false);
 
 const categorieStateGood = ref(false);
 const categorieStateBad = ref(false);
@@ -445,11 +623,34 @@ function handleEscape(event) {
 
 onMounted(async() => {
   window.addEventListener('keydown', handleEscape);
+
+  // Load the users list once at mount for the assignee picker in both modals.
+  // Silent failure: an empty list just means "no assignee available" — the rest
+  // of the page still works.
+  try {
+    const usersResponse = await apiRequest('GET', 'api/user/list/');
+    if (usersResponse && usersResponse.status === 200) {
+      usersList.value = usersResponse.data || [];
+    }
+  } catch (err) {
+    console.error('Failed to load users list for assignee picker:', err);
+  }
+
+  // Load the current authenticated user — used to gate the "Delete task" button.
+  try {
+    const meResponse = await apiRequest('GET', 'api/user/me/');
+    if (meResponse && meResponse.status === 200) {
+      currentUserId.value = meResponse.data?.id ?? null;
+    }
+  } catch (err) {
+    console.error('Failed to load current user:', err);
+  }
+
   try {
     // Récupérer l'ID depuis les paramètres de route
     dashboardId.value = route.params.slug;
-    
-    
+
+
     if (!dashboardId.value) {
       console.error("Aucun ID de dashboard trouvé dans l'URL");
       categorieStateBad.value = true;
@@ -460,7 +661,7 @@ onMounted(async() => {
 
     // Charger les détails du dashboard
     await store.dispatch('detailDashboard', dashboardId.value);
-    
+
     // Vérifier si le dashboard a été chargé
     if (!dashboardDetail.value) {
       console.error("Dashboard non trouvé");
@@ -638,6 +839,7 @@ const addNewTask = async () => {
       taskObject.tags = [];
       taskObject.badgeColor = [];
       taskObject.deadline = '';
+      taskObject.assign_To = null;
       chips.value = [];
       badgeColor.value = [];
     } else {
@@ -680,6 +882,8 @@ const patchTask = async () => {
       taskObject.description = taskDetailFound.description;
       taskObject.tags = taskDetailFound.tags;
       taskObject.id = taskDetailFound.id;
+      taskObject.assign_To = taskDetailFound.assign_To ?? null;
+      taskObject.creator = taskDetailFound.creator ?? null;
 
       snackValue.value = "Saved";
       categorieStateGood.value = true;
@@ -763,6 +967,33 @@ const closeTaskModal = () => {
   badgeColor.value = [];
 };
 
+// Delete the currently-open task. The button is only visible if the current
+// user is the task creator (see canDeleteCurrentTask). Backend also enforces.
+const deleteCurrentTask = async () => {
+  if (!taskObject.id) return;
+  if (!window.confirm('Delete this task? This cannot be undone.')) return;
+
+  isDeleting.value = true;
+  try {
+    const success = await store.dispatch('deleteTask', taskObject.id);
+    if (success) {
+      taskDetailModelValue.value = false;
+      snackValue.value = 'Task deleted';
+      categorieStateGood.value = true;
+      await store.dispatch('detailDashboard', dashboardId.value);
+    } else {
+      snackValue.value = 'Failed to delete task';
+      categorieStateBad.value = true;
+    }
+  } catch (error) {
+    console.error('Error deleting task:', error);
+    snackValue.value = 'Error occurred while deleting the task';
+    categorieStateBad.value = true;
+  } finally {
+    isDeleting.value = false;
+  }
+};
+
 const showTaskModal = async (categorieData) => {
   const receivData = await categorieData;
   if (receivData) {
@@ -773,9 +1004,10 @@ const showTaskModal = async (categorieData) => {
     taskObject.badgeColor = [];
     taskObject.deadline = '';
     taskObject.description = '';
+    taskObject.assign_To = null;
     chips.value = [];
     badgeColor.value = [];
-    
+
     taskModelValue.value = true;
     taskObject.taskCategory = receivData.id;
   }
@@ -796,6 +1028,8 @@ const showTaskDetailModal = async (taskData) => {
       taskObject.tags = taskDetailFound.tags;
       taskObject.id = taskDetailFound.id;
       taskObject.comments = taskDetailFound.comments || [];
+      taskObject.assign_To = taskDetailFound.assign_To ?? null;
+      taskObject.creator = taskDetailFound.creator ?? null;
 
       taskDetailModelValue.value = true;
     }

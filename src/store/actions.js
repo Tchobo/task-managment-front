@@ -164,17 +164,21 @@ export async function patchCategoriePosition({ commit }, category) {
 
 export async function patchTaskPosition({ commit }, task) {
   try {
+    // Position is computed on the frontend (see TaskCategory.vue onChangeTask),
+    // then rounded to 5 decimals (matching the DB DecimalField precision) so
+    // there's no silent truncation. We no longer force position=60000 when it
+    // gets too small — that was misplacing cards. When gaps become dangerously
+    // narrow, the frontend triggers rebalanceCategory instead.
     const response = await apiRequest(
       "PATCH",
       "api/tasks/task-patch/" + task.id,
       {
-        position: task.position < 0.00002 ? 60000.00 : task.position,
-        taskCategorie: task.categorie
+        position: task.position,
+        taskCategorie: task.categorie,
       },
       false
     );
-    
-    
+
     if (response.data) {
       return true;
     } else {
@@ -182,6 +186,21 @@ export async function patchTaskPosition({ commit }, task) {
     }
   } catch (error) {
     console.error('Error patching position value:', error);
+    return false;
+  }
+}
+
+export async function rebalanceCategory({ commit }, categoryId) {
+  try {
+    const response = await apiRequest(
+      "POST",
+      "api/tasks/rebalance-category/" + categoryId + "/",
+      {},
+      false
+    );
+    return response && response.status === 200;
+  } catch (error) {
+    console.error('Error rebalancing category positions:', error);
     return false;
   }
 }
@@ -242,18 +261,18 @@ export async function updateCategory({ commit }, categorieObject) {
 
 export async function addTask({ commit }, taskObject) {
   try {
-    
+
     const formData = new FormData();
     formData.append("title", taskObject.title);
     formData.append("badgeColor", taskObject.badgeColor);
     formData.append("taskCategorie", taskObject.taskCategory);
     formData.append("tags", taskObject.tags);
     formData.append("deadline", taskObject.deadline);
-    
-    // Afficher le contenu du FormData pour debug
-    for (let [key, value] of formData.entries()) {
+    // Only send assign_To when actually set — backend defaults to null otherwise.
+    if (taskObject.assign_To != null && taskObject.assign_To !== "") {
+      formData.append("assign_To", taskObject.assign_To);
     }
- 
+
     const response = await apiRequest(
       "POST",
       "api/tasks/task-create/",
@@ -275,17 +294,24 @@ export async function addTask({ commit }, taskObject) {
 
 export async function updateTask({ commit }, taskObject) {
   try {
-    
+
     const formData = new FormData();
     formData.append("title", taskObject.title);
     formData.append("badgeColor", taskObject.badgeColor);
     formData.append("tags", taskObject.tags);
     formData.append("deadline", taskObject.deadline);
-    
+
     if (taskObject.description) {
       formData.append("description", taskObject.description);
     }
-    
+    // Send assign_To as user id, or empty string to clear it. DRF's
+    // PrimaryKeyRelatedField converts "" to null when allow_null is on
+    // (which it is, since the model field has null=True, blank=True).
+    formData.append(
+      "assign_To",
+      taskObject.assign_To != null ? taskObject.assign_To : ""
+    );
+
     const response = await apiRequest(
       "PUT",
       "api/tasks/task-update/" + taskObject.id,
@@ -337,18 +363,22 @@ export async function detailTask({ commit }, taskId) {
 
 export async function patchTask({ commit }, taskObj) {
   try {
-    
+
     const formDatas = new FormData();
     formDatas.append("title", taskObj.title);
     formDatas.append("description", taskObj.description);
+    // Include assign_To on every patch — empty string clears the assignment.
+    formDatas.append(
+      "assign_To",
+      taskObj.assign_To != null ? taskObj.assign_To : ""
+    );
 
     if (taskObj.uploaded_file && taskObj.uploaded_file.length > 0) {
       taskObj.uploaded_file.forEach(file => {
         formDatas.append("uploaded_files", file, file.name);
       });
     }
-    
-    
+
     const response = await apiRequest(
       "PATCH",
       "api/tasks/task-patch/" + taskObj.id,

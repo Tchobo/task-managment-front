@@ -47,11 +47,11 @@
 
 
         </div>
-       <Draggable 
-  v-model="element.tasks" 
-  group="tasks"  
+       <Draggable
+  v-model="element.tasks"
+  group="tasks"
   item-key="id"
-  class="drag-container cursor-move drag-task"
+  class="drag-container cursor-grab"
   tag="ul"
   drag-class="drag-task"
   ghost-class="ghost-task"
@@ -126,7 +126,14 @@ const snackBarTesxt = ref("")
 
 
 const dragOptions = {
-  direction: 'vertical', // Set the direction to vertical
+  direction: 'vertical',
+  // Force Sortable.js fallback mode (mouse-simulated drag instead of native
+  // HTML5 drag). Native HTML5 drag lets the browser own the cursor style,
+  // ignoring our CSS `cursor: grabbing`. Fallback mode uses a real DOM clone
+  // that we can style via .sortable-drag / .drag-task, so the closed-hand
+  // cursor actually shows while dragging.
+  forceFallback: true,
+  fallbackTolerance: 3,
 };
 const handleItemClick = (value) => {
   activeItem.value = value;
@@ -151,7 +158,6 @@ const onChange = async (e)=>{
 
 
 let item =  e.moved ;
-console.log("item new value", item.newValue);
 
 if (!item) return;
 
@@ -166,8 +172,7 @@ let position =  card.indexNumber
 
 if(prevCard && nextCard){
   position = (parseFloat(prevCard.indexNumber) + parseFloat( nextCard.indexNumber))/2;
-  console.log("Preview index ", prevCard.indexNumber);
-console.log("Next index ", nextCard.indexNumber);
+
 }
 else if(prevCard){
   position = parseFloat(prevCard.indexNumber) + (parseFloat(prevCard.indexNumber)/2);
@@ -192,64 +197,97 @@ else{
 }
  
 }
-const onChangeTask = async (e, element)=>{
-let item = e.added || e.moved;
-console.log("event ", e)
-if (!item)return;
+// Position algorithm — fractional indexing with safety rails.
+// - STEP = default gap between neighbour positions
+// - DB stores 5 decimals (DecimalField(decimal_places=5)), so we round to
+//   avoid silent truncation & collisions
+// - When the gap between neighbours becomes dangerously narrow, we ask the
+//   backend to rebalance the whole category and refresh — cleaner than
+//   fighting a nearly-collided sequence forever.
+const POSITION_STEP = 60000;
+const MIN_GAP = 0.001;
 
-
-
-let index = item.newIndex;
-let activeCategorie = items.value.find(ele=>  ele.id==item.element.taskCategorie);
-
-// identifier les cards
-let prevCard = activeCategorie.tasks[index-1];
-let nextCard = activeCategorie.tasks[index+1];
-let card = activeCategorie.tasks[index];
-let taskPatchingStatus = false; 
-let position =  card? card.position : 0;
-let categoriId = null
-//calculer la position  pour procéder à la modification
-if (e.added){
-  categoriId =element.id
-  console.log("new caategorie id", categoriId);
-}
-else{
-  categoriId=null
+function roundToDbPrecision(value) {
+  return Math.round(value * 1e5) / 1e5;
 }
 
-if(prevCard && nextCard){
-  position = (parseFloat(prevCard.position) + parseFloat( nextCard.position))/2;
-}
-else if(prevCard){
-  position = parseFloat(prevCard.position) + (parseFloat(prevCard.position)/2);
-  
+const onChangeTask = async (e, element) => {
+  const item = e.added || e.moved;
+  if (!item) return;
 
-}
-else if (nextCard){
-  position = (parseFloat(nextCard.position)/2);
+  const index = item.newIndex;
+  const activeCategorie = items.value.find(ele => ele.id == item.element.taskCategorie);
+  if (!activeCategorie) return;
 
-}
-else{
-  position ="60000.00"
-  card=item.element
-  console.log("task categorie ", card.taskCategorie);
-}
-taskPatchingStatus = await store.dispatch('patchTaskPosition', {id:card.id, position:parseFloat(position), categorie: categoriId !=null?categoriId:card.taskCategorie});
+  const prevCard = activeCategorie.tasks[index - 1];
+  const nextCard = activeCategorie.tasks[index + 1];
+  const card = activeCategorie.tasks[index] || item.element;
 
-if (taskPatchingStatus){
-  snackBarTesxt.value = "Task"
-categorieStateGood.value=true
-}
-else{
-  snackBarTesxt.value = "Task not"
-  categorieStateBad.value= true
-}
+  const categoriId = e.added ? element.id : null;
 
+  let position;
+  let needsRebalance = false;
 
+  if (prevCard && nextCard) {
+    // Insert between two cards: midpoint, but flag if the gap is too small.
+    const prev = parseFloat(prevCard.position);
+    const next = parseFloat(nextCard.position);
+    position = (prev + next) / 2;
+    if (Math.abs(next - prev) < MIN_GAP) {
+      needsRebalance = true;
+    }
+  } else if (prevCard) {
+    // Append at the end: fixed step (linear growth, safe for a long time).
+    position = parseFloat(prevCard.position) + POSITION_STEP;
+  } else if (nextCard) {
+    // Insert at the beginning: subtract a fixed step if there's room, else halve.
+    const next = parseFloat(nextCard.position);
+    position = next > POSITION_STEP * 2 ? next - POSITION_STEP : next / 2;
+    if (position < MIN_GAP) {
+      needsRebalance = true;
+    }
+  } else {
+    // Empty category (only one card, the one being dropped in).
+    position = POSITION_STEP;
+  }
 
-  
-}
+  position = roundToDbPrecision(position);
+
+  const targetCategoryId = categoriId !== null ? categoriId : card.taskCategorie;
+
+  // If the gap is too small to represent safely, rebalance the target category
+  // (evens out all positions to STEP, 2*STEP, 3*STEP, …), then reload the
+  // dashboard so the local state reflects the new positions. The user's move
+  // has been persisted visually by vuedraggable; rebalance keeps it consistent.
+  if (needsRebalance) {
+    const ok = await store.dispatch('rebalanceCategory', targetCategoryId);
+    if (ok) {
+      snackBarTesxt.value = 'Positions rebalanced';
+      categorieStateGood.value = true;
+      // Trigger a dashboard refetch so cards show their fresh positions
+      const dashSlug = route.params.slug;
+      if (dashSlug) {
+        await store.dispatch('detailDashboard', dashSlug);
+      }
+      return;
+    }
+    // If rebalance failed, fall through to the normal patch — better than nothing.
+  }
+
+  const taskPatchingStatus = await store.dispatch('patchTaskPosition', {
+    id: card.id,
+    position: position,
+    categorie: targetCategoryId,
+  });
+
+  if (taskPatchingStatus) {
+    snackBarTesxt.value = 'Task';
+    categorieStateGood.value = true;
+  } else {
+    snackBarTesxt.value = 'Task not';
+    categorieStateBad.value = true;
+  }
+};
 
 
 const showTaskDetailModal = (taskData)=>{
@@ -280,11 +318,18 @@ watch(() => props.items, (newValue) => {
   display: block;
 }
 
-.drag-task>div {
+/* During drag: rotate the card + force closed-hand cursor everywhere in the
+   dragged element and its clone (Sortable.js adds `.sortable-drag` to the
+   floating clone that follows the mouse). !important is needed because child
+   components (TaskComponent) set their own cursor: pointer. */
+.drag-task > div {
   transform: rotate(5deg);
-  cursor: move;
-
-
+}
+.drag-task,
+.drag-task *,
+.sortable-drag,
+.sortable-drag * {
+  cursor: grabbing !important;
 }
 
 
