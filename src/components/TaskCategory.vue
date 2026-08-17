@@ -47,26 +47,28 @@
 
 
         </div>
-        <Draggable 
-        v-model="element.tasks" 
-        group="element.tasks"
-        type="list"
-        
-        @change="onChangeTask($event, element)"
-       
-    class="drag-container cursor-move drag-task "
-    item-key="id" tag="ul" drag-class="drag-task" ghost-class="ghost-task" :options="dragOptions"
-
-  
-    >
-    <template #item="{ element }">
-<li >
-  <TaskComponent v-if="element" :taskObjectProp="element"  class="task-comp" @detail-clicked="showTaskDetailModal" /> 
-</li>
- 
-
-</template>
-        </Draggable>
+       <Draggable 
+  v-model="element.tasks" 
+  group="tasks"  
+  item-key="id"
+  class="drag-container cursor-move drag-task"
+  tag="ul"
+  drag-class="drag-task"
+  ghost-class="ghost-task"
+  :options="dragOptions"
+  @change="onChangeTask($event, element)"
+>
+  <template #item="{ element }">
+    <li>
+      <TaskComponent 
+        v-if="element" 
+        :taskObjectProp="element"  
+        class="task-comp" 
+        @detail-clicked="showTaskDetailModal" 
+      /> 
+    </li>
+  </template>
+</Draggable>
 
 
 

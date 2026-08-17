@@ -4,7 +4,7 @@
             <v-layout>
                 <v-navigation-drawer :width="328" class=" w-10 m-auto" v-model="drawer" :rail="rail" permanent>
                     <v-list-item class=" mt-7"  nav>
-                        <span class="font-mono font-bold leading-8 text-[20px] text-task-blue">Ttr.</span>
+                        <span class="font-mono font-bold leading-8 text-[20px] text-task-blue">Tsk.</span>
                     </v-list-item>
 
 

@@ -1,5 +1,5 @@
 <template>
-    <div class="flex  w-full justify-between gap-[70px] bg-task-home-bg overflow-y-auto scrolbar">
+    <div class="flex min-h-screen  w-full justify-between gap-[70px] bg-task-home-bg overflow-y-auto scrolbar">
       <Navigation  :activenumber="3" />
       <div class="main w-full  ">
         <Header @search="handleSearch" />

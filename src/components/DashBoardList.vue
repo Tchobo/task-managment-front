@@ -112,8 +112,10 @@ const hoveredContainer = ref(false)
 // Props
 const props = defineProps({
   items: {
+  
     type: Array,
-    required: true
+    default: () => []
+  
   },
 
 })
