@@ -54,3 +54,7 @@ export function clearDashboardDetail(state) {
 export function clearTaskDetail(state) {
   state.taskDetail = {};
 }
+
+export function setUsersList(state, usersList) {
+  state.usersList = Array.isArray(usersList) ? usersList : [];
+}

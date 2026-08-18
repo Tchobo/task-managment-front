@@ -467,14 +467,33 @@
 
             <div class="mt-4 flex flex-col flex-nowrap overflow-x-auto h-[80px] discussion-container" ref="discussionContainer">
               <div class="flex items-center gap-2 w-full mt-2" v-for="ele in taskObject.comments" :key="ele.id">
-                <img src="../assets/images/task_image.jpg" alt="profile" class="w-7 h-7 rounded-full object-cover self-start items-start flex">
+                <!-- Avatar of the commenter (image or initial fallback) -->
+                <div
+                  class="w-7 h-7 rounded-full overflow-hidden flex items-center justify-center self-start flex-shrink-0"
+                  :style="{ backgroundColor: findUser(ele.user)?.profile_image ? 'transparent' : '#007AFF' }"
+                  :title="findUser(ele.user)?.name || findUser(ele.user)?.email || 'Utilisateur'"
+                >
+                  <img
+                    v-if="findUser(ele.user)?.profile_image"
+                    :src="absoluteMediaUrl(findUser(ele.user).profile_image)"
+                    :alt="findUser(ele.user)?.name || 'avatar'"
+                    class="w-full h-full object-cover"
+                  />
+                  <span
+                    v-else
+                    class="text-white font-mono font-bold"
+                    style="font-size: 11px; line-height: 1;"
+                  >
+                    {{ initialOf(findUser(ele.user)) }}
+                  </span>
+                </div>
                 <div class="form-group w-full">
-                  <input 
+                  <input
                     v-model.trim="ele.text"
                     readonly
                     class="w-full text-task-black-label border rounded-[6px] h-8 border-x-task-gray font-mono pl-3 font-light leading-6 text-[13px] placeholder-task-input-placeholder"
-                    name="text" 
-                    id="text"  
+                    name="text"
+                    id="text"
                   />
                 </div>
               </div>
@@ -565,9 +584,10 @@ const taskObject = reactive({
   creator: null,
 });
 
-// Users list for the assignee picker — fetched once on mount from /api/user/list/.
-// Consumed directly by the v-select components via item-title="(u) => u.name || u.email".
-const usersList = ref([]);
+// Users list for the assignee picker — fetched once on mount from /api/user/list/
+// and stored in Vuex so that any component (task card, comment avatar…) can
+// look up user details by id without prop-drilling.
+const usersList = computed(() => store.state.usersList || []);
 
 // Prefix a backend-relative media path with the API base URL. Users' profile
 // images come back as "/static/media/uploads/..." which the browser would
@@ -576,6 +596,22 @@ function absoluteMediaUrl(path) {
   if (!path) return null;
   if (/^https?:\/\//i.test(path)) return path;
   return apiUrl + (path.startsWith('/') ? path : '/' + path);
+}
+
+// Look up a user record in the usersList by id. Used by the comment loop
+// to display each commenter's avatar/name instead of a static placeholder.
+// Returns null if the id is unknown (comment from a user not in the list).
+function findUser(userId) {
+  if (userId == null) return null;
+  return usersList.value.find((u) => u.id === userId) || null;
+}
+
+// Return the initial (single uppercase letter) to display as an avatar
+// fallback when the user has no profile_image. Safe on null.
+function initialOf(user) {
+  if (!user) return '?';
+  const source = user.name || user.email || '?';
+  return source.charAt(0).toUpperCase();
 }
 
 // Current user id — used to gate the "Delete task" button so that only the
@@ -621,20 +657,42 @@ function handleEscape(event) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Live sync: poll the dashboard every 20 s so cross-user changes (a comment
+// posted from another account, a card dragged into another column, a new
+// assignment…) show up without the current user having to hit reload.
+//
+// The interval only refetches when the tab is visible — no wasted requests
+// while the user is on another tab or has minimised the browser.
+// ---------------------------------------------------------------------------
+const POLL_INTERVAL_MS = 20_000;
+let pollTimerId = null;
+
+function pollDashboard() {
+  if (document.visibilityState === 'visible' && dashboardId.value) {
+    store.dispatch('detailDashboard', dashboardId.value);
+  }
+}
+
+function startDashboardPolling() {
+  stopDashboardPolling();
+  pollTimerId = setInterval(pollDashboard, POLL_INTERVAL_MS);
+}
+
+function stopDashboardPolling() {
+  if (pollTimerId !== null) {
+    clearInterval(pollTimerId);
+    pollTimerId = null;
+  }
+}
+
 onMounted(async() => {
   window.addEventListener('keydown', handleEscape);
 
-  // Load the users list once at mount for the assignee picker in both modals.
-  // Silent failure: an empty list just means "no assignee available" — the rest
-  // of the page still works.
-  try {
-    const usersResponse = await apiRequest('GET', 'api/user/list/');
-    if (usersResponse && usersResponse.status === 200) {
-      usersList.value = usersResponse.data || [];
-    }
-  } catch (err) {
-    console.error('Failed to load users list for assignee picker:', err);
-  }
+  // Load the users list once at mount into Vuex — shared by assignee picker,
+  // task cards, and comment avatars. Silent failure: an empty list just means
+  // "no assignee available" — the rest of the page still works.
+  await store.dispatch('fetchUsersList');
 
   // Load the current authenticated user — used to gate the "Delete task" button.
   try {
@@ -676,11 +734,15 @@ onMounted(async() => {
   } finally {
     isLoadingDashboard.value = false;
   }
+
+  // Start the multi-user live-sync polling once initial load has completed.
+  startDashboardPolling();
 });
 
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleEscape);
+  stopDashboardPolling();
 });
 const currentPageTitle = computed(() => {
   if (route.name == "Task Active") {
@@ -828,10 +890,14 @@ const addNewTask = async () => {
     if (taskStatus ) {
       taskModelValue.value = false;
       isLoading.value = false;
-      await store.dispatch('detailDashboard', dashboardId.value);
-      snackValue.value = `Task ${taskObject.title} created`;
+
+      // Show the success snackbar immediately — before the dashboard refetch
+      // so the user gets instant feedback even if the network call is slow.
+      // Snapshot the title first because we reset taskObject below.
+      const createdTitle = taskObject.title;
+      snackValue.value = `Task ${createdTitle} created`;
       categorieStateGood.value = true;
-      
+
       // Réinitialiser le formulaire
       taskObject.id = null;
       taskObject.title = '';
@@ -842,6 +908,9 @@ const addNewTask = async () => {
       taskObject.assign_To = null;
       chips.value = [];
       badgeColor.value = [];
+
+      // Refresh the Kanban in the background so the new card appears
+      await store.dispatch('detailDashboard', dashboardId.value);
     } else {
       snackValue.value = "Task not saved. Check the values and retry";
       categorieStateBad.value = true;
@@ -920,14 +989,19 @@ const saveDiscussion = async () => {
       isLoadingComment.value = false;
       commentObject.text = "";
 
-
-      await store.dispatch('detailTask', ObjectToSent.task);
+      // Refresh both the modal's task detail (so the comment appears in the
+      // discussion list) AND the dashboard (so the comment counter on the
+      // Kanban card updates without a manual page reload).
+      await Promise.all([
+        store.dispatch('detailTask', ObjectToSent.task),
+        store.dispatch('detailDashboard', dashboardId.value),
+      ]);
       snackValue.value = "Saved";
       categorieStateGood.value = true;
     } else {
       snackValue.value = "Not saved";
       categorieStateBad.value = true;
-    } 
+    }
   } catch (error) {
     console.error('Error d\'enregistrement:', error);
     snackValue.value = "Error occurred";

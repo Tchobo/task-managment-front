@@ -190,6 +190,20 @@ export async function patchTaskPosition({ commit }, task) {
   }
 }
 
+export async function fetchUsersList({ commit }) {
+  try {
+    const response = await apiRequest("GET", "api/user/list/", null, false);
+    if (response && response.status === 200) {
+      commit("setUsersList", response.data || []);
+      return true;
+    }
+    return false;
+  } catch (error) {
+    console.error("Error fetching users list:", error);
+    return false;
+  }
+}
+
 export async function rebalanceCategory({ commit }, categoryId) {
   try {
     const response = await apiRequest(

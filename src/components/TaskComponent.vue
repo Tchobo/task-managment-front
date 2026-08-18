@@ -27,13 +27,36 @@
           </div>
           <div class="assign font-mono font-bold text-[17px] flex mt-3 items-center  justify-between">
 
-            <div class="relative flex p-0 ">
-              <span>+</span>
-              <img src="../assets/images/task_image.jpg" alt="person" class="ml-2 w-[32px] h-[32px] rounded-full">
-              <img src="../assets/images/ProfilePic.png" alt="person"
-                class=" absolute top-[0px] left-10 w-[32px] h-[32px] rounded-full object-cover">
-
-
+            <!-- Assignee avatar (real user, not a placeholder). Falls back to
+                 an "unassigned" hint when the task has no assign_To. -->
+            <div class="relative flex p-0 items-center">
+              <div
+                v-if="assigneeUser"
+                class="w-[32px] h-[32px] rounded-full overflow-hidden flex items-center justify-center flex-shrink-0"
+                :style="{ backgroundColor: assigneeUser.profile_image ? 'transparent' : '#007AFF' }"
+                :title="assigneeUser.name || assigneeUser.email"
+              >
+                <img
+                  v-if="assigneeUser.profile_image"
+                  :src="assigneeAvatarUrl"
+                  :alt="assigneeUser.name || 'avatar'"
+                  class="w-full h-full object-cover"
+                />
+                <span
+                  v-else
+                  class="text-white font-mono font-bold"
+                  style="font-size: 13px; line-height: 1;"
+                >
+                  {{ assigneeInitial }}
+                </span>
+              </div>
+              <div
+                v-else
+                class="w-[32px] h-[32px] rounded-full bg-gray-200 flex items-center justify-center text-gray-400 font-normal text-[16px]"
+                title="Non assignée"
+              >
+                +
+              </div>
             </div>
             <div class="font-mono  text-[14px] font-medium leading-4 text-task-black ml-5 ">{{ taskObjectProp.deadline  }}</div>
             <div class="end-tag flex gap-1 items-center ">
@@ -104,18 +127,14 @@ import { faMessage as farFaMessage } from "@fortawesome/free-solid-svg-icons";
 import { faPaperclip } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import { computed } from "vue";
-
-
-
+import store from "../store";
+import { apiUrl } from "../helpers/api-call";
 
 const props = defineProps({
   taskObjectProp: {
     type: Object,
     required: true,
-
   },
-
-
 });
 
 
@@ -137,8 +156,34 @@ const imageFile = computed(() => {
     return imageExtensions.includes(ext)
   })
 
-  return img ? `http://127.0.0.1:8080${img.file}` : new URL('../assets/images/task_image.jpg', import.meta.url).href
+  return img ? `${apiUrl}${img.file}` : new URL('../assets/images/task_image.jpg', import.meta.url).href
 })
+
+// --- Assignee avatar ------------------------------------------------------
+// Look up the assignee's full record in the shared usersList so we can show
+// the real profile image (or an initial fallback) on the card, instead of
+// a hardcoded placeholder.
+
+const assigneeUser = computed(() => {
+  const id = props.taskObjectProp?.assign_To;
+  if (id == null) return null;
+  const list = store.state.usersList || [];
+  return list.find((u) => u.id === id) || null;
+});
+
+const assigneeAvatarUrl = computed(() => {
+  const path = assigneeUser.value?.profile_image;
+  if (!path) return null;
+  if (/^https?:\/\//i.test(path)) return path;
+  return apiUrl + (path.startsWith('/') ? path : '/' + path);
+});
+
+const assigneeInitial = computed(() => {
+  const u = assigneeUser.value;
+  if (!u) return '?';
+  const source = u.name || u.email || '?';
+  return source.charAt(0).toUpperCase();
+});
 
 </script>
 
