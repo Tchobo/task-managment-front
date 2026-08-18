@@ -1,7 +1,7 @@
 <template>
     <teleport to="body" >
         <transition leave-active-class="duration-200">
-            <div v-show="show" class="fixed inset-0 overflow-y-auto px-4 py-6 sm:px-0 z-50 mt-[5%]" scroll-region>
+            <div v-show="show" class="fixed inset-0 overflow-y-auto z-50 flex items-start justify-center px-4 py-6 sm:px-0" scroll-region>
                 <transition
                     enter-active-class="ease-out duration-300"
                     enter-from-class="opacity-0"
@@ -25,7 +25,7 @@
                 >
                     <div
                         v-show="show"
-                        class="mb-6 my-auto bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:w-full sm:my-auto md:my-auto lg:my-auto sm:mx-auto"
+                        class="mt-16 mb-8 bg-white rounded-lg overflow-hidden shadow-xl transform transition-all sm:w-full sm:mx-auto"
                         :class="maxWidthClass"
                     >
                         <slot v-if="show" />
