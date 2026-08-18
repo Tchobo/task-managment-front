@@ -293,13 +293,10 @@ export async function addTask({ commit }, taskObject) {
       formData,
       { "Content-Type": "multipart/form-data" }
     );
-    
-    
-    if (response.data && response.data.status==201 ) {
-      return true;
-    } else {
-      return false;
-    }
+
+    // Axios exposes the HTTP code on response.status (not response.data.status).
+    // DRF create views return 201, but accept 200 as well for defensiveness.
+    return !!(response && (response.status === 201 || response.status === 200));
   } catch (error) {
     console.error('Error during the save operation:', error);
     return false;
