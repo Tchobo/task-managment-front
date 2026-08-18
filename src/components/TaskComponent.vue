@@ -145,8 +145,9 @@ const handleClick = (taskData) => {
 
 }
 
-// Extensions d’images à reconnaître
-const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp']
+// Extensions d’images à reconnaître (SVG inclus pour supporter les
+// illustrations vectorielles des task samples)
+const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg']
 
 const imageFile = computed(() => {
   const files = props.taskObjectProp?.files || []
