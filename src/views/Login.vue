@@ -152,7 +152,9 @@ const onloginUser = async () => {
 .login-page {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh; /* accounts for mobile browser UI (address bar, etc.) */
+  overflow: hidden;
   background: var(--color-page-bg);
   color: var(--color-text-primary);
   /* Whole page uses JetBrains Mono (same as the 'Welcome back' heading).
@@ -172,11 +174,15 @@ const onloginUser = async () => {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 48px 7% 44px;
+  padding: 32px 7% 28px;
+  min-height: 0; /* let the flex column shrink inside a fixed-height grid cell */
+  overflow: hidden; /* no scrollbar between the two columns */
 }
 
 .login-right {
-  padding: 20px 20px 20px 0;
+  padding: 0;
+  min-height: 0;
+  overflow: hidden;
 }
 
 /* ==================== LEFT: brand ==================== */
@@ -202,10 +208,18 @@ const onloginUser = async () => {
 }
 
 /* ==================== LEFT: form block ==================== */
+/* White card that houses the form. Brand and legal stay OUTSIDE
+   the card as page-level "chrome" (per design decision). */
 .form-block {
-  max-width: 400px;
-  margin: 40px 0;
+  max-width: 440px;
   width: 100%;
+  margin: 24px auto; /* horizontally centered within the left column */
+  padding: 36px 40px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(11, 37, 64, 0.06),
+              0 2px 6px rgba(11, 37, 64, 0.04);
 }
 
 .heading {
@@ -384,10 +398,10 @@ const onloginUser = async () => {
 
 /* ==================== RIGHT: illustration panel ==================== */
 .right-panel {
-  border-radius: 20px;
+  border-radius: 0;
   overflow: hidden;
   background: var(--color-panel-bg);
-  min-height: 560px;
+  min-height: 0;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -436,13 +450,22 @@ const onloginUser = async () => {
 /* ==================== responsive ==================== */
 @media (max-width: 960px) {
   .login-page {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr; /* single column: only the form side */
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
   }
+  .login-left {
+    overflow: visible;
+    padding: 32px 20px;
+  }
+  /* Illustration panel hidden on small screens — mobile users get
+     a focused form-only experience. */
   .login-right {
-    padding: 0 20px 20px;
+    display: none;
   }
-  .right-panel {
-    min-height: 300px;
+  .form-block {
+    padding: 28px 24px; /* slightly tighter card on narrow screens */
   }
 }
 </style>
