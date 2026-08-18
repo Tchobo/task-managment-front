@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 240" width="400" height="240">
+  <rect width="400" height="240" fill="#0B2540"/>
+  <circle cx="60"  cy="50"  r="1.5" fill="#FFFFFF" opacity="0.8"/>
+  <circle cx="330" cy="40"  r="2"   fill="#FFFFFF" opacity="0.9"/>
+  <circle cx="120" cy="180" r="1.5" fill="#FFFFFF" opacity="0.6"/>
+  <circle cx="350" cy="160" r="1.5" fill="#FFFFFF" opacity="0.7"/>
+  <circle cx="200" cy="30"  r="1"   fill="#FFFFFF" opacity="0.5"/>
+  <path d="M200 200 L215 180 L215 100 Q215 60 200 40 Q185 60 185 100 L185 180 Z"
+        fill="#E6F1FB" stroke="#B5D4F4" stroke-width="1"/>
+  <path d="M215 130 L235 145 L235 175 L215 165 Z" fill="#007AFF"/>
+  <path d="M185 130 L165 145 L165 175 L185 165 Z" fill="#007AFF"/>
+  <circle cx="200" cy="100" r="8" fill="#0B2540"/>
+  <circle cx="200" cy="100" r="5" fill="#7FB6FF"/>
+  <path d="M190 200 Q200 220 210 200 L205 205 Q200 215 195 205 Z" fill="#F59E0B"/>
+  <path d="M195 205 Q200 213 205 205" fill="#EF4444"/>
+  <text x="200" y="230" fill="#7FB6FF" font-family="ui-monospace, monospace" font-size="10" letter-spacing="2" text-anchor="middle" opacity="0.8">DEPLOY v2.4.0</text>
+</svg>

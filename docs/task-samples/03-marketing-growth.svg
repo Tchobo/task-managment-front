@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 240" width="400" height="240">
+  <rect width="400" height="240" fill="#E6F1FB"/>
+  <text x="30" y="36" fill="#0B2540" font-family="ui-monospace, monospace" font-size="12" font-weight="700">Q3 GROWTH</text>
+  <text x="30" y="56" fill="#007AFF" font-family="ui-monospace, monospace" font-size="22" font-weight="700">+142%</text>
+  <line x1="30" y1="200" x2="370" y2="200" stroke="#0B2540" stroke-width="1" opacity="0.2"/>
+  <g>
+    <rect x="60"  y="170" width="26" height="30"  rx="4" fill="#85B7EB"/>
+    <rect x="100" y="150" width="26" height="50"  rx="4" fill="#85B7EB"/>
+    <rect x="140" y="130" width="26" height="70"  rx="4" fill="#3B82F6"/>
+    <rect x="180" y="110" width="26" height="90"  rx="4" fill="#3B82F6"/>
+    <rect x="220" y="90"  width="26" height="110" rx="4" fill="#007AFF"/>
+    <rect x="260" y="75"  width="26" height="125" rx="4" fill="#007AFF"/>
+    <rect x="300" y="55"  width="26" height="145" rx="4" fill="#0B2540"/>
+  </g>
+  <polyline points="73,175 113,155 153,135 193,115 233,95 273,80 313,60"
+            stroke="#F59E0B" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="313" cy="60" r="5" fill="#F59E0B"/>
+</svg>
