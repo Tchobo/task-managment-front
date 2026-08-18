@@ -1,136 +1,448 @@
 <template>
-    <div class=" relative pt-8 h-full min-h-screen   w-100 bg-contain bg-right bg-image">
+  <div class="login-page">
+    <!-- ==================== LEFT COLUMN — form ==================== -->
+    <div class="login-left">
+      <!-- Brand lockup -->
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true"></div>
+        <span class="brand-wordmark font-mono">Taskello</span>
+      </div>
 
-        <div class=" absolute w-[44%] left-0 top-0 bottom-0 h-screen bg-bg-white-login ">
-            <div class="mt-[6.2rem] flex justify-center flex-col items-center w-auto height-[70%]">
-                <h3 class="  font-mono text-task-welcom-black font-medium leading-normal text-[48px]">Welcome back !
-                </h3>
-                <p class=" mt-1 font-mono text-task-welcom-black font-medium leading-tight text-[12px]">Don’t have
-                    account? Please <span class="text-task-blue cursor-pointer underline"> sign up</span></p>
-                <div class=" w-[90%]">
-                    <v-container class="">
-                        <v-row>
-                            <v-col cols="12" class="flex justify-start flex-col">
-                                <label for="emailInput"
-                                    class="font-mono text-left text-task-black-label font-medium leading-6 text-[14px]">Email</label>
-                                <input
-                                v-model="loginData.email"
-                                autocomplete="off"
-                                    class="font-mono mt-2 pl-3 font-medium leading-6 text-[14px] focus:outline-task-blue border border-x-task-gray h-[40px] w-full rounded-md placeholder-task-input-placeholder"
-                                    id="emailInput" placeholder="Email" variant="outlined" />
-                                <label for="passwordInput"
-                                    class="mt-6 font-mono text-left text-task-black-label font-medium leading-6 text-[14px]">Password
-                                    </label>
-                                <div class="w-100 relative">
-                                    <input  v-model="loginData.password" class=" mt-2 pl-3 font-mono font-medium leading-6 text-[14px] focus:outline-task-blue border border-x-task-gray h-[40px] w-full rounded-md placeholder-task-input-placeholder" id="passwordInput" placeholder="***************"
-                                        :type="visible ? 'text' : 'password'" outlined />
-                                 <component :is="visible ? EyeArrowLeft : Eye " :size=20  class="ml-4 cursor-pointer text-task-black text-center absolute top-[9px] right-[8px] font-mono font-medium leading-4 text-[14px] p-[10px]"  @click="changePasswordVisibility()" />
-                                </div>
+      <!-- Middle block -->
+      <div class="form-block">
+        <h1 class="heading font-mono">Welcome back</h1>
+        <p class="subline">
+          Don't have an account?
+          <a href="#" class="link-primary">Sign up</a>
+        </p>
 
-                               
+        <form class="form-stack" @submit.prevent="onloginUser">
+          <!-- Email -->
+          <div class="field">
+            <label for="email" class="field-label font-mono">Email</label>
+            <input
+              id="email"
+              v-model="loginData.email"
+              type="email"
+              autocomplete="email"
+              placeholder="you@company.com"
+              class="input"
+            />
+          </div>
 
-                            </v-col>
-                        </v-row>
-                        <v-row class="flex justify-center mt-5">
-                            <a href="#" class="text-center underline text-task-bg-blue font-mono font-medium leading-6 text-[14px] cursor-pointer">Forgot password ?</a>
-                        </v-row>
-                        <v-row class="flex justify-center mt-8">
-                                <v-btn :loading="isLoading" 
- class="text-center w-[130px] rounded-md  btnColor" @click="onloginUser()">
-                                <span class=" font-mono font-medium leading-6 text-[14px] spnLogin" v-if="!isLoading">Login</span>
-                                <v-progress-circular class="font-mono" v-else indeterminate size="8" aria-colcount="white">
-
-                                </v-progress-circular>
-                                
-                                </v-btn>
-
-                                </v-row>
-
-
-                    </v-container>
-                </div>
-
+          <!-- Password -->
+          <div class="field">
+            <div class="password-header">
+              <label for="password" class="field-label font-mono">Password</label>
+              <a href="#" class="link-secondary">Forgot password?</a>
             </div>
+            <div class="password-wrapper">
+              <input
+                id="password"
+                v-model="loginData.password"
+                :type="visible ? 'text' : 'password'"
+                autocomplete="current-password"
+                placeholder="••••••••••••"
+                class="input password-input"
+              />
+              <button
+                type="button"
+                class="password-toggle font-mono"
+                :aria-pressed="visible"
+                aria-label="Toggle password visibility"
+                @click="changePasswordVisibility"
+              >
+                {{ visible ? 'Hide' : 'Show' }}
+              </button>
+            </div>
+          </div>
 
-        </div>
-      
+          <!-- Inline error (auth failure) -->
+          <p v-if="error" class="field-error">{{ error }}</p>
+
+          <!-- Submit -->
+          <button
+            type="submit"
+            class="btn-primary"
+            :disabled="isLoading"
+          >
+            <span v-if="!isLoading">Log in</span>
+            <span v-else class="spinner" aria-label="Loading"></span>
+          </button>
+        </form>
+      </div>
+
+      <!-- Legal footer -->
+      <p class="legal">© 2026 Taskello · <a href="#" class="legal-link">Privacy</a></p>
     </div>
+
+    <!-- ==================== RIGHT COLUMN — illustration ==================== -->
+    <div class="login-right">
+      <div class="right-panel">
+        <div class="illustration-wrapper">
+          <img
+            src="../assets/images/taskello-login-illustration.svg"
+            alt=""
+            class="illustration"
+          />
+        </div>
+       
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
-import { VLabel } from 'vuetify/lib/components/index.mjs';
-import { VTextField } from 'vuetify/lib/components/index.mjs';
-import { VRow } from 'vuetify/lib/components/index.mjs';
-import { VContainer } from 'vuetify/lib/components/index.mjs';
-import { VCol } from 'vuetify/lib/components/index.mjs';
-import { faEye } from '@fortawesome/free-solid-svg-icons';
-import { ref } from "vue"
-import { VBtn } from 'vuetify/lib/components/index.mjs';
-import { VProgressCircular } from 'vuetify/lib/components/index.mjs';
-import Eye from "vue-material-design-icons/Eye.vue"
-import EyeArrowLeft from "vue-material-design-icons/EyeOff.vue"
-
+import { ref } from "vue";
+import { useRouter } from "vue-router";
 import store from "../store";
-import { useRouter } from 'vue-router';
-const visible = ref(false)
-const isLoading = ref(false)
-const loginData = ref({ email: '', password: '' });
+
+const visible = ref(false);
+const isLoading = ref(false);
+const error = ref(null);
+const loginData = ref({ email: "", password: "" });
 
 const router = useRouter();
 
-const changePasswordVisibility =()=>{
-    visible.value = !visible.value
-    console.log("This is the visibility", visible.value);
-}
-
+const changePasswordVisibility = () => {
+  visible.value = !visible.value;
+};
 
 const onloginUser = async () => {
+  error.value = null;
+  isLoading.value = true;
   try {
-    isLoading.value= true
-    const loginStatus = await store.dispatch('loginUser', loginData.value);
+    const loginStatus = await store.dispatch("loginUser", loginData.value);
     if (loginStatus) {
-      // Redirect to dashboard or any other route on successful login
-      isLoading.value=false
-      router.push('/taskmanager');
+      router.push("/taskmanager");
     } else {
-     console.log("Connection impossible"); // Handle unsuccessful login (show error message, etc.)
+      error.value = "Invalid email or password. Please try again.";
     }
-  } catch (error) {
-    console.error('Error logging in:', error);
-    // Handle error (show error message, retry login, etc.)
+  } catch (err) {
+    console.error("Error logging in:", err);
+    error.value = "Something went wrong. Please try again in a moment.";
+  } finally {
+    isLoading.value = false;
   }
 };
 </script>
 
 <style scoped>
-.bg-image {
-    background-image: url('../assets/images/login_image.jpg');
-   background-color:rgba(217, 217, 217, 1);
-    background-blend-mode: multiply, screen, darken;
-    filter: contrast(1.1);
-    background-position: bottom 0 right 100px;
- 
-
-
-
+/* ==================== DESIGN TOKENS ==================== */
+/* Colors */
+.login-page {
+  --color-primary: #007aff;
+  --color-primary-hover: #0062d1;
+  --color-focus-ring: rgba(0, 122, 255, 0.18);
+  --color-page-bg: #f7f6f4;
+  --color-surface: #ffffff;
+  --color-panel-bg: #0B2540;
+  --color-caption-bg: #0C447C;
+  --color-text-primary: #1a1a18;
+  --color-text-secondary: #6b6760;
+  --color-text-muted: #a8a49d;
+  --color-border: #e0ddd6;
+  --color-rule: #e6e3dc;
+  --color-border-hover: #b8b3aa;
+  --color-hover-fill: #f2f0ec;
+  --color-error: #d32f2f;
 }
 
-.v-text-field--outlined :deep(fieldset) {
-    outline-color: #007AFF !important;
-    background: blue;
+/* ==================== LAYOUT ==================== */
+.login-page {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 100vh;
+  background: var(--color-page-bg);
+  color: var(--color-text-primary);
+  /* Whole page uses JetBrains Mono (same as the 'Welcome back' heading).
+     Everything inside inherits from here — no need to sprinkle .font-mono
+     across every child. */
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
 }
 
-.spnLogin{
-    text-transform: none;
+/* Buttons and inputs don't inherit font by default in most browsers,
+   so we force it explicitly for these controls. */
+.login-page input,
+.login-page button {
+  font-family: inherit;
 }
-.btnColor{
-    background: rgba(0, 122, 255, 1);
-    color: #ffffff;
+
+.login-left {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 48px 7% 44px;
 }
-input:focus{
-    border-color: none;
+
+.login-right {
+  padding: 20px 20px 20px 0;
 }
-input:valid {
-  background: none!important; /* Change to your desired background color */
+
+/* ==================== LEFT: brand ==================== */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-mark {
+  width: 22px;
+  height: 22px;
+  background: var(--color-primary);
+  border-radius: 6px;
+}
+
+.brand-wordmark {
+  font-size: 13px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+  font-weight: 500;
+}
+
+/* ==================== LEFT: form block ==================== */
+.form-block {
+  max-width: 400px;
+  margin: 40px 0;
+  width: 100%;
+}
+
+.heading {
+  font-size: 36px;
+  line-height: 1.15;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.subline {
+  margin-top: 12px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+
+.link-primary {
+  color: var(--color-primary);
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.link-primary:hover {
+  color: var(--color-primary-hover);
+  text-decoration: underline;
+}
+
+.link-secondary {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.link-secondary:hover {
+  color: var(--color-primary-hover);
+  text-decoration: underline;
+}
+
+.form-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 36px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.field-label {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.password-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+/* ==================== inputs ==================== */
+.input {
+  height: 50px;
+  padding: 0 16px;
+  font-size: 15px;
+  color: var(--color-text-primary);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  outline: none;
+  width: 100%;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.input::placeholder {
+  color: var(--color-text-muted);
+}
+.input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-focus-ring);
+}
+
+.password-wrapper {
+  position: relative;
+}
+
+.password-input {
+  padding: 0 68px 0 16px;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 6px;
+  top: 6px;
+  height: 38px;
+  padding: 0 12px;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  background: transparent;
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.15s, color 0.15s;
+}
+.password-toggle:hover {
+  background: var(--color-hover-fill);
+  color: var(--color-primary);
+}
+
+/* ==================== inline error ==================== */
+.field-error {
+  font-size: 13px;
+  color: var(--color-error);
+  margin: -6px 0 0;
+}
+
+/* ==================== primary button ==================== */
+.btn-primary {
+  width: 100%;
+  height: 50px;
+  margin-top: 6px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--color-primary);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+}
+.btn-primary:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ==================== LEFT: legal ==================== */
+.legal {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.legal-link {
+  color: var(--color-text-muted);
+  text-decoration: none;
+}
+.legal-link:hover {
+  text-decoration: underline;
+}
+
+/* ==================== RIGHT: illustration panel ==================== */
+.right-panel {
+  border-radius: 20px;
+  overflow: hidden;
+  background: var(--color-panel-bg);
+  min-height: 560px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.illustration-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  overflow: hidden;
+}
+
+.illustration {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.caption-card {
+  margin: 16px;
+  padding: 24px 28px;
+  border-radius: 14px;
+  background: var(--color-caption-bg);
+}
+
+.caption-headline {
+  font-size: 19px;
+  line-height: 1.5;
+  font-weight: 500;
+  color: #fff;
+  max-width: 460px;
+  margin: 0;
+}
+
+.caption-subline {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 10px 0 0;
+}
+
+/* ==================== responsive ==================== */
+@media (max-width: 960px) {
+  .login-page {
+    grid-template-columns: 1fr;
+  }
+  .login-right {
+    padding: 0 20px 20px;
+  }
+  .right-panel {
+    min-height: 300px;
+  }
 }
 </style>
